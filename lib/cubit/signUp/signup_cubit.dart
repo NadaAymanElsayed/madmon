@@ -2,13 +2,9 @@ import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/material.dart';
-import 'package:meta/meta.dart';
-
+import 'package:madmon/cubit/signUp/signup_state.dart';
 import '../../core/utils/dialogUtils.dart';
 import '../../model/signUp.dart';
-
-part 'signup_state.dart';
-
 
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit() : super(AuthState());
@@ -29,6 +25,10 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(confirmPassword: value));
   }
 
+  void roleChanged(String value) {
+    emit(state.copyWith(role: value));
+  }
+
   void togglePasswordVisibility() {
     emit(state.copyWith(isPasswordVisible: !state.isPasswordVisible));
   }
@@ -42,21 +42,22 @@ class AuthCubit extends Cubit<AuthState> {
     final email = state.email.trim();
     final password = state.password.trim();
     final confirmPassword = state.confirmPassword.trim();
+    final role = state.role;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      emit(state.copyWith(errorMessage: "Please fill in all fields."));
+    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty || role.isEmpty) {
+      emit(state.copyWith(errorMessage: "يرجى ملء جميع الحقول واختيار نوع الحساب."));
       return;
     }
 
     if (password != confirmPassword) {
-      emit(state.copyWith(errorMessage: "Passwords do not match."));
+      emit(state.copyWith(errorMessage: "كلمتا المرور غير متطابقتين."));
       return;
     }
 
     emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
-      DialogUtils.showLoading(context: context, message: "Registering...");
+      DialogUtils.showLoading(context: context, message: "جاري التسجيل...");
 
       final credential = await fb_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
@@ -64,57 +65,72 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       final uid = credential.user?.uid;
-      if (uid != null) {
-        DialogUtils.showLoading(context: context, message: "Saving data...");
 
-        final user = AppUser(name: name, email: email);
+      if (uid != null) {
+        final user = AppUser(name: name, email: email, role: role);
+
         await FirebaseFirestore.instance.collection('users').doc(uid).set(user.toMap());
 
-        DialogUtils.hideLoading(context);
 
-        await Future.delayed(Duration(milliseconds: 200));
+        if (context.mounted) {
+          DialogUtils.hideLoading(context);
 
-        DialogUtils.showMessage(
-          context: context,
-          message: "Registration successful!",
-          title: "Success",
-          posActionName: "Go to Home",
-          posAction: () {
-            Navigator.pushReplacementNamed(context, '/home');
-          },
-        );
+          await Future.delayed(const Duration(milliseconds: 200));
+
+          DialogUtils.showMessage(
+            context: context,
+            message: "تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.",
+            title: "تم التسجيل",
+            posActionName: "الذهاب لتسجيل الدخول",
+            posAction: () async {
+              await fb_auth.FirebaseAuth.instance.signOut();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          );
+        }
       }
     } on fb_auth.FirebaseAuthException catch (e) {
-      DialogUtils.hideLoading(context);
+      if (context.mounted) DialogUtils.hideLoading(context);
 
       String errorMsg;
       if (e.code == 'weak-password') {
-        errorMsg = 'The password provided is too weak.';
+        errorMsg = 'كلمة المرور ضعيفة جدًا.';
       } else if (e.code == 'email-already-in-use') {
-        errorMsg = 'The email is already registered.';
+        errorMsg = 'البريد الإلكتروني مستخدم مسبقًا.';
       } else {
-        errorMsg = 'Registration error: ${e.message}';
+        errorMsg = 'خطأ في التسجيل: ${e.message}';
       }
+
+      print('FirebaseAuthException during registration: $errorMsg');
+
       emit(state.copyWith(errorMessage: errorMsg));
-      DialogUtils.showMessage(
-        context: context,
-        message: errorMsg,
-        title: "Error",
-        negActionName: "Try again",
-      );
-    } catch (e) {
-      DialogUtils.hideLoading(context);
-      final errorMsg = 'An unexpected error occurred: $e';
+
+      if (context.mounted) {
+        DialogUtils.showMessage(
+          context: context,
+          message: errorMsg,
+          title: "خطأ",
+          negActionName: "حاول مرة أخرى",
+        );
+      }
+    } catch (e, stacktrace) {
+      if (context.mounted) DialogUtils.hideLoading(context);
+
+      print('Unexpected error during registration: $e');
+      print('Stacktrace: $stacktrace');
+
+      final errorMsg = 'حدث خطأ غير متوقع: $e';
       emit(state.copyWith(errorMessage: errorMsg));
-      DialogUtils.showMessage(
-        context: context,
-        message: errorMsg,
-        title: "Error",
-      );
+
+      if (context.mounted) {
+        DialogUtils.showMessage(
+          context: context,
+          message: errorMsg,
+          title: "خطأ",
+        );
+      }
     } finally {
       emit(state.copyWith(isLoading: false));
-      if (context.mounted) DialogUtils.hideLoading(context);
     }
   }
 }
-

@@ -1,11 +1,9 @@
-part of 'signup_cubit.dart';
-
-@immutable
 class AuthState {
   final String name;
   final String email;
   final String password;
   final String confirmPassword;
+  final String role;
 
   final bool isLoading;
   final bool isPasswordVisible;
@@ -18,6 +16,7 @@ class AuthState {
     this.email = '',
     this.password = '',
     this.confirmPassword = '',
+    this.role = 'technician',
     this.isLoading = false,
     this.isPasswordVisible = false,
     this.isConfirmPasswordVisible = false,
@@ -29,6 +28,7 @@ class AuthState {
     String? email,
     String? password,
     String? confirmPassword,
+    String? role,
     bool? isLoading,
     bool? isPasswordVisible,
     bool? isConfirmPasswordVisible,
@@ -39,6 +39,7 @@ class AuthState {
       email: email ?? this.email,
       password: password ?? this.password,
       confirmPassword: confirmPassword ?? this.confirmPassword,
+      role: role ?? this.role,
       isLoading: isLoading ?? this.isLoading,
       isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
       isConfirmPasswordVisible: isConfirmPasswordVisible ?? this.isConfirmPasswordVisible,

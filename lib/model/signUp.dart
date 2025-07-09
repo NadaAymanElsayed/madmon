@@ -2,10 +2,12 @@ class AppUser {
   final String name;
   final String email;
   final String? password;
+  final String role;
 
   AppUser({
     required this.name,
     required this.email,
+    required this.role,
     this.password,
   });
 
@@ -13,6 +15,7 @@ class AppUser {
     return {
       'name': name,
       'email': email,
+      'role': role,
     };
   }
 
@@ -20,6 +23,7 @@ class AppUser {
     return AppUser(
       name: map['name'],
       email: map['email'],
+      role: map['role'],
     );
   }
 }

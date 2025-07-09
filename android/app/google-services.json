@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "995078348476",
+    "project_id": "madmon-7bf80",
+    "storage_bucket": "madmon-7bf80.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:995078348476:android:37732b6c68c418de9ebab9",
+        "android_client_info": {
+          "package_name": "com.example.madmon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfqX7g3BEdvw9rFg8wsqv8-r2G-0K6IOk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

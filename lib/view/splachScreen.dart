@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:madmon/view/login.dart';
-
 import '../constants/appAssets.dart';
 import '../constants/appColors.dart';
-import 'id.dart';
 
 class Splachscreen extends StatelessWidget {
   const Splachscreen({super.key});
@@ -13,7 +11,7 @@ class Splachscreen extends StatelessWidget {
     Future.delayed(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ID()),
+        MaterialPageRoute(builder: (context) => Login()),
       );
     });
     return Scaffold(

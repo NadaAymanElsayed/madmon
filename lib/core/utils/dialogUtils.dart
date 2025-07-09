@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../model/jobs.dart';
+import '../../cubit/home/home_cubit.dart';
+
 
 class DialogUtils {
   static bool _isDialogShowing = false;
 
-  /// عرض Dialog تحميل
   static void showLoading({required BuildContext context, required String message}) {
     if (_isDialogShowing) return;
 
@@ -26,7 +30,6 @@ class DialogUtils {
     );
   }
 
-  /// إغلاق Dialog التحميل
   static void hideLoading(BuildContext context) {
     if (_isDialogShowing && Navigator.of(context, rootNavigator: true).canPop()) {
       Navigator.of(context, rootNavigator: true).pop();
@@ -34,7 +37,6 @@ class DialogUtils {
     }
   }
 
-  /// عرض Dialog رسالة عامة
   static void showMessage({
     required BuildContext context,
     required String message,
@@ -89,7 +91,6 @@ class DialogUtils {
     );
   }
 
-  /// إغلاق التحميل ثم عرض الرسالة
   static void showMessageAfterLoading({
     required BuildContext context,
     required String message,
@@ -99,7 +100,7 @@ class DialogUtils {
     String? negActionName,
     Function? negAction,
   }) {
-    hideLoading(context); // تأكد من إغلاق Dialog التحميل أولاً
+    hideLoading(context);
 
     Future.delayed(const Duration(milliseconds: 200), () {
       if (context.mounted) {
@@ -116,4 +117,113 @@ class DialogUtils {
       }
     });
   }
+
+  static void showAddJobDialog(BuildContext context) {
+    TextEditingController titleController = TextEditingController();
+    TextEditingController technicianController = TextEditingController();
+    TextEditingController dateController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('إضافة مهمة جديدة'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'المهمة'),
+                ),
+                TextField(
+                  controller: technicianController,
+                  decoration: const InputDecoration(labelText: 'اسم الفني'),
+                ),
+                TextField(
+                  controller: dateController,
+                  decoration: const InputDecoration(labelText: 'تاريخ'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final job = Job(
+                  id: FirebaseFirestore.instance.collection('jobs').doc().id,
+                  title: titleController.text,
+                  technician: technicianController.text,
+                  date: dateController.text,
+                  isCompleted: false,
+                );
+
+                await context.read<JobsCubit>().addJob(job);
+                Navigator.pop(context);
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static void showEditDialog(BuildContext context, Job job) {
+    TextEditingController titleController = TextEditingController(text: job.title);
+    TextEditingController technicianController = TextEditingController(text: job.technician);
+    TextEditingController dateController = TextEditingController(text: job.date);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تعديل المهمة'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'المهمة'),
+                ),
+                TextField(
+                  controller: technicianController,
+                  decoration: const InputDecoration(labelText: 'اسم الفني'),
+                ),
+                TextField(
+                  controller: dateController,
+                  decoration: const InputDecoration(labelText: 'تاريخ'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final updatedJob = job.copyWith(
+                  title: titleController.text,
+                  technician: technicianController.text,
+                  date: dateController.text,
+                );
+
+                await context.read<JobsCubit>().updateJob(updatedJob);
+                Navigator.pop(context);
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
