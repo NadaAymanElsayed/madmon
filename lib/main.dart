@@ -8,8 +8,11 @@ import 'package:madmon/view/homeTech.dart';
 import 'package:madmon/view/login.dart';
 import 'package:madmon/view/signup.dart';
 import 'package:madmon/view/splachScreen.dart';
-import 'cubit/home/home_cubit.dart';
+import 'cubit/jobs/jobs_cubit.dart';
+import 'cubit/login/login_cubit.dart';
+import 'cubit/tech/tech_cubit.dart';
 import 'firebase_options.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +21,18 @@ void main() async {
   );
 
   runApp(
-    BlocProvider(
-      create: (_) => JobsCubit(FirebaseFirestore.instance),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => JobsCubit(FirebaseFirestore.instance),
+        ),
+        BlocProvider(
+          create: (_) => TechniciansCubit(FirebaseFirestore.instance),
+        ),
+        BlocProvider(
+          create: (_) => LoginCubit(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -36,39 +49,48 @@ class MyApp extends StatelessWidget {
         fontFamily: 'droid',
       ),
       home: const Splachscreen(),
-        onGenerateRoute: (settings) {
-          switch (settings.name) {
-            case '/home':
-              final args = settings.arguments as Map<String, String>;
-              final role = args['role']!;
-              final technicianName = args['technicianName'] ?? '';
 
-              if (role == 'admin') {
-                return MaterialPageRoute(builder: (_) => HomeAdmin(userRole: role));
-              } else if (role == 'technician') {
-                return MaterialPageRoute(
-                  builder: (_) => HomeTech(
-                    userRole: role,
-                    technicianName: technicianName,
-                  ),
-                );
-              }
-              break;
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/home':
+            final args = settings.arguments as Map<String, String>;
+            final role = args['role']!;
+            final technicianName = args['technicianName'] ?? '';
 
-            case '/login':
-              return MaterialPageRoute(builder: (_) => Login());
+            if (role == 'admin') {
+              return MaterialPageRoute(
+                builder: (context) => HomeAdmin(userRole: role),
+              );
+            } else if (role == 'technician') {
+              return MaterialPageRoute(
+                builder: (context) => HomeTech(
+                  userRole: role,
+                  technicianName: technicianName,
+                ),
+              );
+            }
+            break;
 
-            case '/signup':
-              return MaterialPageRoute(builder: (_) => SignUp());
+          case '/login':
+            return MaterialPageRoute(
+              builder: (context) => Login(),
+            );
 
-            case '/forgetpassword':
-              return MaterialPageRoute(builder: (_) => const ForgetPassword());
+          case '/signup':
+            return MaterialPageRoute(
+              builder: (context) => SignUp(),
+            );
 
-            default:
-              return null;
-          }
+          case '/forgetpassword':
+            return MaterialPageRoute(
+              builder: (context) => const ForgetPassword(),
+            );
+
+          default:
+            return null;
         }
-
+      },
     );
   }
 }
+

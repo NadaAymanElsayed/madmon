@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../cubit/jobs/jobs_cubit.dart';
 import '../../model/jobs.dart';
-import '../../cubit/home/home_cubit.dart';
-
 
 class DialogUtils {
   static bool _isDialogShowing = false;

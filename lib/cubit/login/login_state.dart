@@ -3,31 +3,35 @@ part of 'login_cubit.dart';
 class LoginState {
   final String email;
   final String password;
+  final bool isPasswordVisible;
   final bool isLoading;
   final String? errorMessage;
-  final bool isPasswordVisible;
+  final bool rememberMe;
 
   LoginState({
     this.email = '',
     this.password = '',
+    this.isPasswordVisible = false,
     this.isLoading = false,
     this.errorMessage,
-    this.isPasswordVisible = false,
+    this.rememberMe = false,
   });
 
   LoginState copyWith({
     String? email,
     String? password,
+    bool? isPasswordVisible,
     bool? isLoading,
     String? errorMessage,
-    bool? isPasswordVisible,
+    bool? rememberMe,
   }) {
     return LoginState(
       email: email ?? this.email,
       password: password ?? this.password,
+      isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
-      isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
+      rememberMe: rememberMe ?? this.rememberMe,
     );
   }
 }

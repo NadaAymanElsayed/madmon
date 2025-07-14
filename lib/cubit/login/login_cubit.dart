@@ -2,13 +2,32 @@ import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/utils/dialogUtils.dart';
-import '../../view/homePageAdmin.dart';
 import '../../view/homeTech.dart';
+import '../../view/techList.dart';
 part 'login_state.dart';
 
+
 class LoginCubit extends Cubit<LoginState> {
-  LoginCubit() : super(LoginState());
+  LoginCubit() : super(LoginState()) {
+    _loadRememberedCredentials();
+  }
+
+  Future<void> _loadRememberedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool('rememberMe') ?? false;
+
+    if (rememberMe) {
+      final email = prefs.getString('email') ?? '';
+      final password = prefs.getString('password') ?? '';
+      emit(state.copyWith(
+        rememberMe: true,
+        email: email,
+        password: password,
+      ));
+    }
+  }
 
   void emailChanged(String value) {
     emit(state.copyWith(email: value, errorMessage: null));
@@ -22,13 +41,26 @@ class LoginCubit extends Cubit<LoginState> {
     emit(state.copyWith(isPasswordVisible: !state.isPasswordVisible));
   }
 
+  void toggleRememberMe(bool? value) async {
+    final newValue = value ?? false;
+    emit(state.copyWith(rememberMe: newValue));
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('rememberMe', newValue);
+
+    if (!newValue) {
+      // لو حذف "تذكرني"، نمسح البيانات
+      await prefs.remove('email');
+      await prefs.remove('password');
+    }
+  }
+
   Future<void> login(BuildContext context) async {
     final email = state.email.trim();
     final password = state.password.trim();
 
     if (email.isEmpty || password.isEmpty) {
       emit(state.copyWith(errorMessage: 'يرجى إدخال البريد الإلكتروني وكلمة المرور'));
-      print('Login error: empty email or password');
       return;
     }
 
@@ -48,10 +80,16 @@ class LoginCubit extends Cubit<LoginState> {
 
       DialogUtils.hideLoading(context);
 
+      if (state.rememberMe) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('email', email);
+        await prefs.setString('password', password);
+      }
+
       if (role == 'admin') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => HomeAdmin(userRole: 'admin')),
+          MaterialPageRoute(builder: (_) => const TechnicianListScreen()),
         );
       } else if (role == 'technician') {
         final technicianName = doc.data()?['name'] ?? '';
@@ -67,7 +105,6 @@ class LoginCubit extends Cubit<LoginState> {
       } else {
         final unknownRoleMsg = 'نوع الحساب غير معروف.';
         emit(state.copyWith(errorMessage: unknownRoleMsg));
-        print('Login error: $unknownRoleMsg');
         DialogUtils.showMessage(
           context: context,
           title: 'خطأ',
@@ -78,12 +115,10 @@ class LoginCubit extends Cubit<LoginState> {
       DialogUtils.hideLoading(context);
       final errorMsg = e.message ?? 'حدث خطأ أثناء تسجيل الدخول';
       emit(state.copyWith(errorMessage: errorMsg));
-      print('FirebaseAuthException: $errorMsg');
     } catch (e) {
       DialogUtils.hideLoading(context);
       final errorMsg = 'حدث خطأ غير متوقع: $e';
       emit(state.copyWith(errorMessage: errorMsg));
-      print(errorMsg);
     } finally {
       emit(state.copyWith(isLoading: false));
     }
